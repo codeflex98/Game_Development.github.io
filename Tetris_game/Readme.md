@@ -11,7 +11,7 @@ This is a simplified version of the classic **Tetris** game built using Python's
 3. Run the game using:
 
 ```bash
-python tetris.py
+python tetris.exe
 ````
 ---
 
