@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🐍 Snake Game</title>
+  <style>
+    canvas {
+      background-color: #aad751;
+      display: block;
+      margin: 0 auto;
+      border: 3px solid darkgreen;
+    }
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #e6f2d4;
+    }
+    #score {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      background: #2f4f4f;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake Game</h1>
+  <div id="score">Score: 0  High Score: 0</div>
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+  <script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  let delay = 100;
+  let score = 0;
+  let highScore = 0;
+
+  const box = 20;
+  const canvasSize = 600;
+  const rows = canvasSize / box;
+
+  let head = { x: 10, y: 10 };
+  let food = randomFood();
+  let direction = "";
+  let segments = [];
+  let gameOver = false;
+
+  document.addEventListener("keydown", keyDown);
+
+  function keyDown(e) {
+    if (!gameOver) {
+      if (e.key === "w" && direction !== "down") direction = "up";
+      if (e.key === "s" && direction !== "up") direction = "down";
+      if (e.key === "a" && direction !== "right") direction = "left";
+      if (e.key === "d" && direction !== "left") direction = "right";
+    } else if (e.key === "Enter") {
+      restartGame();
+    }
+  }
+
+  function drawSquare(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x * box, y * box, box, box);
+  }
+
+  function updateScore() {
+    document.getElementById("score").innerText = `Score: ${score}  High Score: ${highScore}`;
+  }
+
+  function randomFood() {
+    return {
+      x: Math.floor(Math.random() * (rows - 3)) + 1,
+      y: Math.floor(Math.random() * (rows - 3)) + 1
+    };
+  }
+
+  function drawGameOver() {
+    ctx.fillStyle = "#2f4f4f";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+    ctx.font = "20px Arial";
+    ctx.fillText("Press Enter to Restart", canvas.width / 2, canvas.height / 2 + 20);
+  }
+
+  function restartGame() {
+    head = { x: 10, y: 10 };
+    direction = "";
+    segments = [];
+    score = 0;
+    delay = 100;
+    food = randomFood();
+    gameOver = false;
+    updateScore();
+    gameLoop();
+  }
+
+  function gameLoop() {
+    if (gameOver) {
+      drawGameOver();
+      return;
+    }
+
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+    drawSquare(food.x, food.y, "tomato");
+    drawSquare(head.x, head.y, "#2f4f4f");
+
+    for (let i = 0; i < segments.length; i++) {
+      const color = i % 2 === 0 ? "#556b2f" : "#6b8e23";
+      drawSquare(segments[i].x, segments[i].y, color);
+    }
+
+    if (segments.length) {
+      segments.unshift({ x: head.x, y: head.y });
+      segments.pop();
+    }
+
+    if (direction === "up") head.y -= 1;
+    if (direction === "down") head.y += 1;
+    if (direction === "left") head.x -= 1;
+    if (direction === "right") head.x += 1;
+
+    // Wall collision
+    if (head.x < 0 || head.y < 0 || head.x >= rows || head.y >= rows) {
+      gameOver = true;
+      drawGameOver();
+      return;
+    }
+
+    // Self collision
+    for (let seg of segments) {
+      if (seg.x === head.x && seg.y === head.y) {
+        gameOver = true;
+        drawGameOver();
+        return;
+      }
+    }
+
+    // Food collision
+    if (head.x === food.x && head.y === food.y) {
+      segments.push({ x: head.x, y: head.y });
+      food = randomFood();
+      score += 10;
+      delay = Math.max(30, delay - 1);
+      if (score > highScore) highScore = score;
+      updateScore();
+    }
+
+    setTimeout(gameLoop, delay);
+  }
+
+  updateScore();
+  gameLoop();
+</script>
+</body>
+</html>
