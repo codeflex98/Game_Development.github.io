@@ -2,6 +2,8 @@
 
 This is a graphical implementation of the popular 2048 puzzle game using Python's `turtle` module. The game supports keyboard controls, score tracking, tile merging, game-over detection, and restarting using the **Enter** key.
 
+## Access the game on Chrome through this link :
+https://codeflex98.github.io/Game_Development.github.io/2048/2048_(V.0.1).html
 ---
 
 ## Features
