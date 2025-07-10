@@ -148,7 +148,7 @@
       segments.push({ x: head.x, y: head.y });
       food = randomFood();
       score += 10;
-      delay = Math.max(30, baseDelay - segments.length * 2);
+      delay = Math.max(30, delay -1);
       if (score > highScore) highScore = score;
       updateScore();
     }
