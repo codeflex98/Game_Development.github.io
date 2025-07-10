@@ -2,6 +2,10 @@
 
 This is a simple implementation of the classic Snake game using Python's built-in `turtle` graphics module. The game features smooth animations, keyboard controls, collision detection, scoring, and visual enhancements.
 
+Play the game on google schrome with this link !
+
+https://codeflex98.github.io/Game_Development.github.io/Snake_game/sample_snake_(V.0.1).html
+
 ## Features
 
 - Snake movement using keyboard (WASD)
