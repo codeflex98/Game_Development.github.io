@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tetris Game</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    canvas {
+      background: #111;
+      display: block;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tetris Game</h1>
+  <canvas id="gameCanvas" width="300" height="600"></canvas>
+  <p>Score: <span id="score">0</span></p>
+  <script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const COLS = 10, ROWS = 20, GRID_SIZE = 30;
+  const COLORS = {
+    'O': 'yellow', 'I': 'cyan', 'S': 'limegreen', 'Z': 'red',
+    'L': 'orange', 'J': 'blue', 'T': 'purple'
+  };
+
+  const SHAPES = {
+    'O': [[0, 0], [1, 0], [0, 1], [1, 1]],
+    'I': [[0, 1], [1, 1], [2, 1], [3, 1]],
+    'S': [[1, 0], [2, 0], [0, 1], [1, 1]],
+    'Z': [[0, 0], [1, 0], [1, 1], [2, 1]],
+    'L': [[0, 0], [0, 1], [0, 2], [1, 2]],
+    'J': [[1, 0], [1, 1], [1, 2], [0, 2]],
+    'T': [[0, 1], [1, 1], [2, 1], [1, 2]],
+  };
+
+  let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  let score = 0;
+  let current;
+  let lastDropTime = 0;
+  const dropInterval = 500; // ms
+
+  function drawSquare(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+  }
+
+  function drawGrid() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (grid[y][x]) {
+          drawSquare(x, y, grid[y][x]);
+        }
+      }
+    }
+  }
+
+  class Tetromino {
+    constructor() {
+      const keys = Object.keys(SHAPES);
+      this.shape = keys[Math.floor(Math.random() * keys.length)];
+      this.blocks = SHAPES[this.shape].map(p => ({ x: p[0], y: p[1] }));
+      this.color = COLORS[this.shape];
+      this.x = 3;
+      this.y = 0;
+    }
+
+    draw() {
+      this.blocks.forEach(b => {
+        drawSquare(this.x + b.x, this.y + b.y, this.color);
+      });
+    }
+
+    move(dx, dy) {
+      if (!this.collides(dx, dy, this.blocks)) {
+        this.x += dx;
+        this.y += dy;
+        return true;
+      }
+      return false;
+    }
+
+    rotate() {
+      const rotated = this.blocks.map(b => ({ x: -b.y, y: b.x }));
+      if (!this.collides(0, 0, rotated)) {
+        this.blocks = rotated;
+      }
+    }
+
+    collides(dx, dy, blocks) {
+      return blocks.some(b => {
+        const x = this.x + b.x + dx;
+        const y = this.y + b.y + dy;
+        return (
+          x < 0 || x >= COLS || y >= ROWS || (y >= 0 && grid[y][x])
+        );
+      });
+    }
+
+    freeze() {
+      this.blocks.forEach(b => {
+        const x = this.x + b.x;
+        const y = this.y + b.y;
+        if (y >= 0 && x >= 0 && y < ROWS && x < COLS) {
+          grid[y][x] = this.color;
+        }
+      });
+    }
+  }
+
+  function clearLines() {
+    let linesCleared = 0;
+    grid = grid.filter(row => {
+      if (row.every(cell => cell)) {
+        linesCleared++;
+        return false;
+      }
+      return true;
+    });
+    while (grid.length < ROWS) {
+      grid.unshift(Array(COLS).fill(null));
+    }
+    score += linesCleared * 100;
+    document.getElementById("score").innerText = score;
+  }
+
+  function spawnNew() {
+    current = new Tetromino();
+    if (current.collides(0, 0, current.blocks)) {
+      alert("Game Over! Final Score: " + score);
+      grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      score = 0;
+      document.getElementById("score").innerText = score;
+    }
+  }
+
+  function update(time = 0) {
+    drawGrid();
+    current.draw();
+
+    if (time - lastDropTime > dropInterval) {
+      if (!current.move(0, 1)) {
+        current.freeze();
+        clearLines();
+        spawnNew();
+      }
+      lastDropTime = time;
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") current.move(-1, 0);
+    else if (e.key === "ArrowRight") current.move(1, 0);
+    else if (e.key === "ArrowDown") current.move(0, 1);
+    else if (e.key === "ArrowUp") current.rotate();
+  });
+
+  spawnNew();
+  requestAnimationFrame(update);
+</script>
+</body>
+</html>
