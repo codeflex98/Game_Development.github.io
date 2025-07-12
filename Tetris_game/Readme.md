@@ -3,6 +3,9 @@
 This is a simplified version of the classic **Tetris** game built using Python's `turtle` module. It features falling tetrominoes, line clearing, a scoring system, and automatic game reset upon game over.
 
 ---
+Play the game on goggle chrome with this liknk !
+
+https://codeflex98.github.io/Game_Development.github.io/Tetris_game/tetris_(V.0.1).html
 
 ## How to Run
 
