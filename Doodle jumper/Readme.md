@@ -2,6 +2,10 @@
 
 A vertical-scrolling platformer game built using Python's `turtle` module. The player controls a bouncing doodle character that jumps between moving platforms, collects power-ups, and avoids falling off the screen.
 
+Play the game on google chrome using the lionk !
+
+https://codeflex98.github.io/Game_Development.github.io/Doodle%20jumper/Doodle%20jumper_(V.0.1).html
+
 ## Features
 
 - Jump physics with gravity simulation
