@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Doodle Jumper - p5.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: seashell; }
+    canvas { display: block; margin: auto; }
+  </style>
+</head>
+<body>
+<script>
+let player;
+let platforms = [];
+let powerups = [];
+let score = 0;
+let highScore = 0;
+let gravity = 0.6;
+let jumpStrength = -12;
+let moveSpeed = 5;
+let gameOver = false;
+let gameStarted = false;
+let scoredPlatforms = new Set();
+let lastSpeedUpdate = 0;
+const platformSpacing = 80;
+
+function setup() {
+  createCanvas(400, 600);
+  player = new Player();
+  generateInitialPlatforms();
+  textFont('Arial');
+}
+
+function draw() {
+  background('seashell');
+
+  // Always show scene (paused or running)
+  player.show();
+  for (let plat of platforms) plat.show();
+  for (let p of powerups) p.show();
+  displayScore();
+
+  if (gameOver) {
+    fill('red');
+    textAlign(CENTER);
+    textSize(24);
+    text("GAME OVER\nPress R to Restart", width / 2, height / 2);
+    drawBorder();
+    return;
+  }
+
+  if (!gameStarted) {
+    fill(50);
+    textAlign(CENTER);
+    textSize(24);
+    text("Press ← or → to Start", width / 2, height / 2);
+    drawBorder();
+    return;
+  }
+
+  // --- Game Logic ---
+  player.update();
+  for (let plat of platforms) plat.update();
+
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    let p = powerups[i];
+    if (dist(player.x, player.y, p.x, p.y) < 20) {
+      if (p.kind === 'jump') player.dy += 20;
+      if (p.kind === 'score') {
+        score += 50;
+        updateScore();
+      }
+      powerups.splice(i, 1);
+    }
+  }
+
+  handleScrolling();
+  checkCollisions();
+  updateScore();
+
+  if (player.y > height) {
+    gameOver = true;
+    if (score > highScore) highScore = score;
+  }
+
+  drawBorder(); // draw border at the end
+}
+
+function drawBorder() {
+  noFill();
+  stroke(0);
+  strokeWeight(1);
+  rect(0.5, 0.5, width - 1, height - 1);
+}
+
+function keyPressed() {
+  if (keyCode === LEFT_ARROW || keyCode === RIGHT_ARROW) {
+    gameStarted = true;
+  }
+
+  if (keyCode === LEFT_ARROW) player.left = true;
+  if (keyCode === RIGHT_ARROW) player.right = true;
+
+  if (key === 'r' || key === 'R') resetGame();
+
+  if (key === ' ' && score >= 50) {
+    player.dy = jumpStrength * 1.5;
+    score -= 50;
+  }
+}
+
+function keyReleased() {
+  if (keyCode === LEFT_ARROW) player.left = false;
+  if (keyCode === RIGHT_ARROW) player.right = false;
+}
+
+function resetGame() {
+  score = 0;
+  lastSpeedUpdate = 0;
+  gameOver = false;
+  gameStarted = false;
+  player = new Player();
+  scoredPlatforms.clear();
+  platforms = [];
+  powerups = [];
+  generateInitialPlatforms();
+}
+
+function updateScore() {
+  if (score - lastSpeedUpdate >= 100) {
+    lastSpeedUpdate = score;
+    for (let plat of platforms) {
+      plat.speedX *= 1.2;
+    }
+  }
+}
+
+function displayScore() {
+  fill(0);
+  textSize(16);
+  textAlign(LEFT);
+  text(`Score: ${score}  High Score: ${highScore}`, 10, 20);
+  if (score >= 50) {
+    fill('blue');
+    textAlign(CENTER);
+    text("Press SPACE for Power Jump", width / 2, 40);
+  }
+}
+
+function handleScrolling() {
+  if (player.y < 100) {
+    let offset = 100 - player.y;
+    player.y = 100;
+    for (let plat of platforms) plat.y += offset;
+    for (let p of powerups) p.y += offset;
+
+    for (let plat of platforms) {
+      if (plat.y > height) {
+        let highestY = Math.min(...platforms.map(p => p.y));
+        plat.respawn(random(30, width - 30), highestY - platformSpacing);
+        if (random() < 0.3) {
+          powerups.push(new PowerUp(plat.x, plat.y - 10, random() < 0.5 ? "jump" : "score"));
+        }
+      }
+    }
+  }
+}
+
+function generateInitialPlatforms() {
+  let y = height - 20;
+  for (let i = 0; i < 12; i++) {
+    let x = random(30, width - 30);
+    let plat;
+
+    if (i === 0) {
+      plat = new Platform(x, y, 120); // longer first platform
+      plat.disappearing = false;
+    } else {
+      plat = new Platform(x, y); // default width = 80
+    }
+
+    platforms.push(plat);
+    y -= platformSpacing;
+  }
+
+  player.x = platforms[0].x;
+  player.y = platforms[0].y - 20;
+}
+
+class Player {
+  constructor() {
+    this.x = width / 2;
+    this.y = height - 50;
+    this.dy = 0;
+    this.left = false;
+    this.right = false;
+  }
+
+  update() {
+    if (this.left) this.x -= moveSpeed;
+    if (this.right) this.x += moveSpeed;
+    this.dy += gravity;
+    this.y += this.dy;
+    this.x = constrain(this.x, 10, width - 10);
+  }
+
+  show() {
+    fill('yellow');
+    stroke(0);
+    ellipse(this.x, this.y, 24, 24);
+  }
+}
+
+class Platform {
+  constructor(x, y, width = 80) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.speedX = random([-1, 1]) * random(0.5, 1.5);
+    this.disappearing = random() < 0.2;
+  }
+
+  update() {
+    this.x += this.speedX;
+    if (this.x < 30 || this.x > width - 30) this.speedX *= -1;
+  }
+
+  show() {
+    fill(this.disappearing ? 'red' : 'lime');
+    rect(this.x - this.width / 2, this.y, this.width, 12);
+  }
+
+  respawn(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = 80;
+    this.speedX = random([-1, 1]) * random(0.5, 1.5);
+    this.disappearing = random() < 0.2;
+  }
+}
+
+class PowerUp {
+  constructor(x, y, kind) {
+    this.x = x;
+    this.y = y;
+    this.kind = kind;
+  }
+
+  show() {
+    fill(this.kind === 'jump' ? 'blue' : 'yellow');
+    ellipse(this.x, this.y, 14);
+  }
+}
+
+function checkCollisions() {
+  for (let plat of platforms) {
+    let prevY = player.y - player.dy;
+
+    if (
+      player.dy > 0 &&
+      prevY + 12 <= plat.y &&
+      player.y + 12 >= plat.y &&
+      player.x > plat.x - plat.width / 2 &&
+      player.x < plat.x + plat.width / 2
+    ) {
+      player.dy = jumpStrength;
+
+      if (plat.disappearing) {
+        plat.y = height + 200;
+        plat.x = -1000;
+        plat.speedX = 0;
+      }
+
+      if (!scoredPlatforms.has(plat)) {
+        score += 10;
+        scoredPlatforms.add(plat);
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>
