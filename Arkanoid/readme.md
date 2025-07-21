@@ -2,6 +2,10 @@
 
 **Aranoid - Smooth Paddle** is a browser-based brick-breaker game inspired by the classic arcade game *Arkanoid*. The objective is to destroy all bricks using a bouncing ball while controlling a paddle to prevent the ball from falling.
 
+play the game online with this link !
+
+https://codeflex98.github.io/Game_Development.github.io/Arkanoid/Arkanoid_(V.0.1)%20.html
+
 ## Features
 
 - Smooth and responsive paddle movement using keyboard inputs
