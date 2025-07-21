@@ -36,14 +36,6 @@
 
 No server or build tools are required. The game runs entirely in the browser using native HTML5 and JavaScript.
 
-## File Structure
-
-project-root/
-│
-├── index.html       # Main game code and logic
-
-All logic is self-contained in a single HTML file using a `<canvas>` element for rendering.
-
 ## Customization Ideas
 
 You can expand the game with the following enhancements:
